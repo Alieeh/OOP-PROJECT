@@ -6,7 +6,7 @@ package it.polito.extgol;
  * Used to indicate invalid configurations or unexpected states
  * during board evolution or game setup.
  */
-public class ExtendedGameOfLifeException extends Exception {
+public class ExtendedGameOfLifeException extends RuntimeException {
 
     /**
      * Constructs a new ExtendedGameOfLifeException with the specified detail message.
