@@ -330,7 +330,7 @@ public class Game {
         GameRepository retrievedRepo = new GameRepository();
         Game retrievedGame = retrievedRepo.load(game.getId());
         if (retrievedGame == null) {
-            return Map.of();
+            return Map.of(); //returning an empty map
         }
         return Map.copyOf(retrievedGame.getEventMapInternal());
     }
