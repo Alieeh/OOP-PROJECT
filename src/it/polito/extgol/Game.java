@@ -241,7 +241,35 @@ public class Game {
      * @param cell  the Cell instance to which the event should be applied
      */
     public void unrollEvent(EventType event, Cell cell) {
-        // TODO: implement event application logic
+        switch (event) { //we can use a switch case as the events are enumerated
+            case CATACLYSM:
+                cell.setLifePoints(0);
+                break;
+            case FAMINE:
+                cell.setLifePoints(cell.getLifePoints() - 1);
+                break;
+            case BLOOM:
+                cell.setLifePoints(cell.getLifePoints() + 2);
+                break;
+            case BLOOD_MOON:
+                if(cell.getMood() == CellMood.VAMPIRE){
+                    for (Tile tile : cell.getNeighbors()){
+                        Cell neighbor = tile.getCell();
+                        if (neighbor != null && neighbor.getMood() == CellMood.HEALER) {
+                            neighbor.setMood(CellMood.VAMPIRE); //convert the neighbor to a vampire
+                        }
+                    }
+                }
+                break;
+            case SANCTUARY:
+                if(cell.getMood() == CellMood.HEALER){
+                    cell.setLifePoints(cell.getLifePoints() + 1);
+                }
+                else if(cell.getMood() == CellMood.VAMPIRE){
+                    cell.setMood(CellMood.NAIVE); //convert the vampire to a naive
+                }
+                break;
+        }
     }
 
     /**
@@ -252,7 +280,7 @@ public class Game {
      * @param targetCoordinates the list of coordinates of cells to update
      */
     public void setMood(CellMood mood, List<Coord> targetCoordinates) {
-        // TODO: implement mood assignment for specified cells
+        //stated that we should ignore this method
     }
 
     /**
@@ -263,7 +291,18 @@ public class Game {
      * @param coordinates the list of cell coordinates to update
      */
     public void setMoods(CellMood mood, List<Coord> coordinates) {
-        // TODO: implement moods assignment for specified coordinates
+        for (Coord currentCoord : coordinates) {
+            Tile tile = board.getTile(currentCoord); //iterating through coords, we use the board defined in the class
+            if (tile != null) {
+                Cell cell = tile.getCell();
+                if (cell != null) { //MAYBE WE CAN UPDATE NON ALIVE CELLS AS WELL, ASK ABOUT THIS
+                    cell.setMood(mood);
+                }
+            }
+            else {
+                System.out.println("Tile not found at coordinates: " + coordinates);
+            }
+        }
     }
 
     /**
@@ -272,9 +311,10 @@ public class Game {
      *
      * @return a mutable Map from generation step to EventType
      */
+    private Map<Integer, EventType> eventMap = new HashMap<>();
+
     public Map<Integer, EventType> getEventMapInternal() {
-        // TODO: return the actual event schedule map
-        return new HashMap<>();
+        return eventMap;
     }
 
     /**
@@ -287,7 +327,11 @@ public class Game {
      * @return an immutable Map from generation step to EventType
      */
     public static Map<Integer, EventType> loadEvents(Game game) {
-        // TODO: implement repository loading
-        return null; 
+        GameRepository retrievedRepo = new GameRepository();
+        Game retrievedGame = retrievedRepo.load(game.getId());
+        if (retrievedGame == null) {
+            throw new IllegalArgumentException("game not found");
+        }
+        return Map.copyOf(retrievedGame.getEventMapInternal());
     }
 }
