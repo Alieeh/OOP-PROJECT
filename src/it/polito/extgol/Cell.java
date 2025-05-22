@@ -6,6 +6,7 @@ import java.util.List;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -14,6 +15,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
@@ -30,6 +33,8 @@ import jakarta.persistence.Transient;
  * and Interactable to model cell–cell energy exchanges.
  */
 @Entity
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "cell_discriminator")
 public class Cell implements Evolvable, Interactable {
 
     @Id
@@ -54,7 +59,8 @@ public class Cell implements Evolvable, Interactable {
     @Column(name = "lifepoints", nullable = false)
     protected Integer lifepoints = 0;
 
-    //new
+    
+    // extended-GOL attrs
     @Enumerated(EnumType.STRING)
     @Column(name = "cell_type", nullable = false)
     protected CellType cellType = CellType.BASIC;
@@ -62,7 +68,7 @@ public class Cell implements Evolvable, Interactable {
     @Enumerated(EnumType.STRING)
     @Column(name = "cell_mood", nullable = false)
     protected CellMood cellMood = CellMood.NAIVE;
-    //end
+
 
     /** Reference to the parent board (read-only). */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -128,39 +134,35 @@ public class Cell implements Evolvable, Interactable {
     @Override
     public Boolean evolve(int aliveNeighbors) {
         Boolean willLive = this.isAlive;
+        this.lifepoints += tile.getLifePointModifier();
 
-    if (!this.isAlive && aliveNeighbors == 3) {
-        willLive = true;
-        this.lifepoints = 0;
-    } else if (this.isAlive) {
-        boolean deathByUnderpop = aliveNeighbors < 2;
-        boolean deathByOverpop = aliveNeighbors > 3;
+        if (!this.isAlive && aliveNeighbors == 3) {
+            willLive = true;
+            this.lifepoints = 0;
+        } else if (this.isAlive) {
+            boolean deathByUnderpop = aliveNeighbors < 2;
+            boolean deathByOverpop = aliveNeighbors > 3;
 
-        if (cellType == CellType.LONER) {
-            deathByUnderpop = aliveNeighbors < 1;
-        }
-        if (cellType == CellType.SOCIAL) {
-            deathByOverpop = aliveNeighbors > 8;
-        }
-
-        if (deathByUnderpop || deathByOverpop) {
-            if (cellType == CellType.HIGHLANDER ) {
-                if (getGenerations().size() + 1 > 3){
-                    willLive = false;
-                    this.lifepoints -= 1;
-                }else{
-                    this.lifepoints += 1;
-                }
-            } else {
-                willLive = false;
-                this.lifepoints -= 1;
+            if (cellType == CellType.LONER) {
+                deathByUnderpop = aliveNeighbors < 1;
             }
-        } else {
-            this.lifepoints += 1;
-        }
-    }
+            if (cellType == CellType.SOCIAL) {
+                deathByOverpop = aliveNeighbors > 8;
+            }
 
-    return willLive;
+            if (deathByUnderpop || deathByOverpop) {
+                willLive = false;
+                this.lifepoints--;
+            } else {
+                this.lifepoints++;
+            }
+        }
+
+        if (lifepoints < 0) {
+            willLive = false;
+        }
+
+        return willLive;
     }
 
     /**
@@ -329,7 +331,7 @@ public class Cell implements Evolvable, Interactable {
             }
         }
         default -> {
-            // NAIVE + anything = no interaction
+            // nothing happens
         }
     }
     }

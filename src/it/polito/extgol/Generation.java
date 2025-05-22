@@ -114,8 +114,33 @@ public class Generation {
      * @param type   the cell type to assign
      */
     public void setType(List<Coord> coords, CellType type) {
+        for (Coord coord : coords) {
+            Tile tile = board.getTile(coord);
+            if (tile == null)
+                throw new IllegalStateException("No tile at coordinate: " + coord);
 
-        // to be implemented for R1
+            Cell newCell;
+            switch (type) {
+                case HIGHLANDER:
+                    newCell = new Highlander(coord, tile, board, game);
+                    break;
+                case LONER:
+                    newCell = new Loner(coord, tile, board, game);
+                    break;
+                case SOCIAL:
+                    newCell = new Social(coord, tile, board, game);
+                    break;
+                default:
+                    newCell = new Cell(coord, tile, board, game);
+                    break;
+            }
+
+            newCell.setType(type);
+            newCell.setAlive(true);
+            
+            tile.setCell(newCell);
+        }
+        this.snapCells();
     }
 
     /**
@@ -300,24 +325,11 @@ public class Generation {
         game.clearGenerations();
         Generation generation = new Generation(game, board, 0);
 
-        // Set the type and aliveness of each relevant cell
+        
         for (Map.Entry<Coord, CellType> entry : cellTypesMap.entrySet()) {
-            Coord coord = entry.getKey();
-            CellType type = entry.getValue();
-
-            Tile tile = board.getTile(coord);
-            if (tile == null)
-                throw new ExtendedGameOfLifeException("No tile found at " + coord);
-
-            Cell cell = tile.getCell();
-            if (cell == null)
-                throw new ExtendedGameOfLifeException("Tile at " + coord + " does not contain a cell");
-
-            cell.setType(type);
-            cell.setAlive(true);
+            generation.setType(List.of(entry.getKey()), entry.getValue());
         }
 
-        generation.snapCells();
         game.addGeneration(generation, 0);
         return generation;
     }
