@@ -330,7 +330,7 @@ public class Game {
         GameRepository retrievedRepo = new GameRepository();
         Game retrievedGame = retrievedRepo.load(game.getId());
         if (retrievedGame == null) {
-            throw new IllegalArgumentException("game not found");
+            return Map.of();
         }
         return Map.copyOf(retrievedGame.getEventMapInternal());
     }
