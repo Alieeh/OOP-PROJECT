@@ -6,13 +6,18 @@ import java.util.List;
 import java.util.Map;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.MapKeyColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.OrderColumn;
@@ -68,6 +73,13 @@ public class Game {
     )
     @OrderColumn(name = "generation_index")
     private List<Generation> generations = new ArrayList<>();
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "game_events", joinColumns = @JoinColumn(name = "game_id"))
+    @MapKeyColumn(name = "generation_step")
+    @Column(name = "event_type")
+    @Enumerated(EnumType.STRING)
+    private Map<Integer, EventType> eventMap = new HashMap<>();
 
     /**
      * Default constructor for JPA.
@@ -311,7 +323,6 @@ public class Game {
      *
      * @return a mutable Map from generation step to EventType
      */
-    private Map<Integer, EventType> eventMap = new HashMap<>();
 
     public Map<Integer, EventType> getEventMapInternal() {
         return eventMap;

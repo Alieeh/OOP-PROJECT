@@ -111,8 +111,10 @@ public class ExtendedGameOfLife {
      */
     public Game run(Game game, int steps, Map<Integer, EventType> eventMap) {
         Generation currentGen = game.getStart();
+        Map<Integer, EventType> oldEvents = game.getEventMapInternal();
         for (int i = 0; i < steps; i++) {
             EventType event = eventMap.get(i);
+            oldEvents.put(i, event); 
             if (event != null) {
                 for (Tile tile : currentGen.getBoard().getTiles()) {
                     game.unrollEvent(event, tile.getCell()); //we apply the events to each cell
