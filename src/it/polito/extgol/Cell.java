@@ -6,12 +6,17 @@ import java.util.List;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
@@ -28,6 +33,8 @@ import jakarta.persistence.Transient;
  * and Interactable to model cell–cell energy exchanges.
  */
 @Entity
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "cell_discriminator")
 public class Cell implements Evolvable, Interactable {
 
     @Id
@@ -51,6 +58,17 @@ public class Cell implements Evolvable, Interactable {
     /** Persisted lifepoints (default 0) */
     @Column(name = "lifepoints", nullable = false)
     protected Integer lifepoints = 0;
+
+    
+    // extended-GOL attrs
+    @Enumerated(EnumType.STRING)
+    @Column(name = "cell_type", nullable = false)
+    protected CellType cellType = CellType.BASIC;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "cell_mood", nullable = false)
+    protected CellMood cellMood = CellMood.NAIVE;
+
 
     /** Reference to the parent board (read-only). */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -115,23 +133,34 @@ public class Cell implements Evolvable, Interactable {
      */
     @Override
     public Boolean evolve(int aliveNeighbors) {
-        // Start by assuming the cell retains its current state
         Boolean willLive = this.isAlive;
+        this.lifepoints += tile.getLifePointModifier();
 
-        // Overpopulation: more than 3 neighbors kills a live cell
-        if (aliveNeighbors > 3) {
-            willLive = false;
-        }
-        // Underpopulation: fewer than 2 neighbors kills a live cell
-        else if (aliveNeighbors < 2) {
-            willLive = false;
-        }
-        // Respawn: exactly 3 neighbors brings a dead cell to life
-        else if (!this.isAlive && aliveNeighbors == 3) {
+        if (!this.isAlive && aliveNeighbors == 3) {
             willLive = true;
+            this.lifepoints = 0;
+        } else if (this.isAlive) {
+            boolean deathByUnderpop = aliveNeighbors < 2;
+            boolean deathByOverpop = aliveNeighbors > 3;
+
+            if (cellType == CellType.LONER) {
+                deathByUnderpop = aliveNeighbors < 1;
+            }
+            if (cellType == CellType.SOCIAL) {
+                deathByOverpop = aliveNeighbors > 8;
+            }
+
+            if (deathByUnderpop || deathByOverpop) {
+                willLive = false;
+                this.lifepoints--;
+            } else {
+                this.lifepoints++;
+            }
         }
-        // Otherwise (2 or 3 neighbors on a live cell) nothing changes and willLive
-        // remains true
+
+        if (lifepoints < 0) {
+            willLive = false;
+        }
 
         return willLive;
     }
@@ -258,8 +287,7 @@ public class Cell implements Evolvable, Interactable {
      * @return the number of life points the cell currently has
      */
     public int getLifePoints() {
-        // TODO Auto-generated method stub
-        return 0;
+        return this.lifepoints;
     }
 
     /**
@@ -268,7 +296,7 @@ public class Cell implements Evolvable, Interactable {
      * @param lifePoints the new number of life points to assign to the cell
      */
     public void setLifePoints(int lifePoints) {
-        // TODO Auto-generated method stub
+        this.lifepoints = lifePoints;
     }
 
     /**
@@ -281,7 +309,31 @@ public class Cell implements Evolvable, Interactable {
      */
     @Override
     public void interact(Cell otherCell) {
-        // TODO Auto-generated method stub
+        if (!this.isAlive || !otherCell.isAlive) return;
+
+    switch (this.cellMood) {
+        case HEALER -> {
+            if (otherCell.cellMood == CellMood.NAIVE) {
+                otherCell.lifepoints += 1;
+            } else if (otherCell.cellMood == CellMood.VAMPIRE) {
+                this.lifepoints -= 1;
+                otherCell.lifepoints += 1;
+            }
+        }
+        case VAMPIRE -> {
+            if (otherCell.cellMood == CellMood.NAIVE) {
+                otherCell.lifepoints -= 1;
+                otherCell.cellMood = CellMood.VAMPIRE;
+                this.lifepoints += 1;
+            } else if (otherCell.cellMood == CellMood.HEALER) {
+                otherCell.lifepoints -= 1;
+                this.lifepoints += 1;
+            }
+        }
+        default -> {
+            // nothing happens
+        }
+    }
     }
 
     /**
@@ -290,7 +342,7 @@ public class Cell implements Evolvable, Interactable {
      * @param t the CellType to set (e.g., BASIC, HIGHLANDER, LONER, SOCIAL)
      */
     public void setType(CellType t) {
-        // TODO Auto-generated method stub
+        this.cellType = t;
     }
 
     /**
@@ -299,7 +351,7 @@ public class Cell implements Evolvable, Interactable {
      * @param mood the CellMood to assign (NAIVE, HEALER, or VAMPIRE)
      */
     public void setMood(CellMood mood) {
-        // TODO Auto-generated method stub
+        this.cellMood = mood;
     }
 
     /**
@@ -308,8 +360,7 @@ public class Cell implements Evolvable, Interactable {
      * @return the CellMood representing the cell’s interaction style
      */
     public CellMood getMood() {
-        // TODO Auto-generated method stub
-        return null;
+        return this.cellMood;
     }
 
 }
