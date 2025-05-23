@@ -49,7 +49,6 @@ public class ExtendedGameOfLife {
             if (c == null) {
                 throw new IllegalStateException("Missing cell on tile " + tile);
             }
-
             int aliveNeighbors = c.countAliveNeighbors();
             boolean nextState = c.evolve(aliveNeighbors);
 
@@ -111,12 +110,21 @@ public class ExtendedGameOfLife {
      * @return          The same Game instance, now containing the extended generation history.
      */
     public Game run(Game game, int steps, Map<Integer, EventType> eventMap) {
-        
-        return null;
-    }
+        Generation currentGen = game.getStart();
+        for (int i = 0; i < steps; i++) {
+            EventType event = eventMap.get(i);
+            if (event != null) {
+                for (Tile tile : currentGen.getBoard().getTiles()) {
+                    game.unrollEvent(event, tile.getCell()); //we apply the events to each cell
+                }
+            }
 
-    /**
-     * Builds and returns a map associating each coordinate with its alive Cell 
+            Generation next = evolve(currentGen);
+            currentGen = next;
+        }
+        return game;
+    }
+     /* Builds and returns a map associating each coordinate with its alive Cell 
      * instance for the specified generation.
      *
      * Iterates over all alive cells present in the given generation and constructs 
