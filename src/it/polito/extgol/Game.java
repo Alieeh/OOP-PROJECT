@@ -263,7 +263,18 @@ public class Game {
      * @param coordinates the list of cell coordinates to update
      */
     public void setMoods(CellMood mood, List<Coord> coordinates) {
-        // TODO: implement moods assignment for specified coordinates
+        for (Coord currentCoord : coordinates) {
+            Tile tile = board.getTile(currentCoord); //iterating through coords, we use the board defined in the class
+            if (tile != null) {
+                Cell cell = tile.getCell();
+                if (cell != null) { //MAYBE WE CAN UPDATE NON ALIVE CELLS AS WELL, ASK ABOUT THIS
+                    cell.setMood(mood);
+                }
+            }
+            else {
+                System.out.println("Tile not found at coordinates: " + coordinates);
+            }
+        }
     }
 
     /**

@@ -136,6 +136,19 @@ public class Cell implements Evolvable, Interactable {
         Boolean willLive = this.isAlive;
         this.lifepoints += tile.getLifePointModifier();
 
+        List<Tile> sortedNeighbors = new ArrayList<>(getNeighbors());
+        sortedNeighbors.sort((a, b) -> {
+            int cmpY = Integer.compare(a.getY(), b.getY());
+            return (cmpY != 0) ? cmpY : Integer.compare(a.getX(), b.getX());
+        });
+
+        for (Tile t : sortedNeighbors) {
+            Cell neighborCell = t.getCell();
+            if (neighborCell != null && neighborCell.isAlive()) {
+                this.interact(neighborCell);
+            }
+        }
+
         if (!this.isAlive && aliveNeighbors == 3) {
             willLive = true;
             this.lifepoints = 0;
