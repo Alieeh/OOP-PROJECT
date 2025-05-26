@@ -44,10 +44,24 @@ public class ExtendedGameOfLife {
 
         // Step 1: Compute next state for each cell based only on current generation state
         Map<Cell, Boolean> nextStates = new HashMap<>();
+        
         for (Tile tile : board.getTiles()) {
             Cell c = tile.getCell();
             if (c == null) {
                 throw new IllegalStateException("Missing cell on tile " + tile);
+            }
+            if (c.isAlive()) {
+                c.setLifePoints(c.getLifePoints() + tile.getLifePointModifier());
+
+                for (Tile neighborTile : tile.getNeighbors()) {
+                    Cell neighbor = neighborTile.getCell();
+                    if (neighbor != null && neighbor.isAlive()) {
+                        // Interact only once per pair (avoid double interaction)
+                        if (c.getCoordinates().hashCode() < neighbor.getCoordinates().hashCode()) {
+                            c.interact(neighbor);
+                        }
+                    }
+                }
             }
 
             int aliveNeighbors = c.countAliveNeighbors();

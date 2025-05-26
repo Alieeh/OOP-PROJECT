@@ -69,6 +69,10 @@ public class Tile implements Interactable{
     @Column(name = "life_point_modifier", nullable = false)
     private Integer lifePointModifier = 0;
 
+
+    @Column(name = "life_modifier", nullable = false)
+    private int lifePointModifier = 0;
+
     /**
      * Default constructor required by JPA.
      */
@@ -198,6 +202,7 @@ public class Tile implements Interactable{
      * @return the integer modifier to a cell's lifePoints when evolving
      */
     public Integer getLifePointModifier() {
+<<<<<<< HEAD
         return this.lifePointModifier;
     }
     
@@ -222,4 +227,14 @@ public class Tile implements Interactable{
             cell.setLifePoints(currentLifePoints + this.lifePointModifier);
         }
     }
+=======
+        return lifePointModifier;
+    }
+
+    public void setLifePointModifier(int modifier) {
+    this.lifePointModifier = modifier;
+}
+    
+
+>>>>>>> 43f1ba8c82ff69c0d35e35fa407fccb8f08599a0
 }

@@ -114,8 +114,33 @@ public class Generation {
      * @param type   the cell type to assign
      */
     public void setType(List<Coord> coords, CellType type) {
+        for (Coord coord : coords) {
+            Tile tile = board.getTile(coord);
+            if (tile == null)
+                throw new IllegalStateException("No tile at coordinate: " + coord);
 
-        // to be implemented for R1
+            Cell newCell;
+            switch (type) {
+                case HIGHLANDER:
+                    newCell = new Highlander(coord, tile, board, game);
+                    break;
+                case LONER:
+                    newCell = new Loner(coord, tile, board, game);
+                    break;
+                case SOCIAL:
+                    newCell = new Social(coord, tile, board, game);
+                    break;
+                default:
+                    newCell = new Cell(coord, tile, board, game);
+                    break;
+            }
+
+            newCell.setType(type);
+            newCell.setAlive(true);
+            
+            tile.setCell(newCell);
+        }
+        this.snapCells();
     }
 
     /**
@@ -293,9 +318,20 @@ public class Generation {
      * @return a new Generation representing step 0 with the given cell types alive
      * @throws ExtendedGameOfLifeException if game, board, or cellTypesMap is null
      */
-    public static Generation createInitial(Game game, Board board, Map<Coord, CellType> cellTypesMap) {
-        // TODO: create specialized factory
-        return null;
+    public static Generation createInitial(Game game, Board board, Map<Coord, CellType> cellTypesMap) throws ExtendedGameOfLifeException {
+        if (game == null || board == null || cellTypesMap == null)
+        throw new ExtendedGameOfLifeException("Game, board, and cell types map must not be null");
+
+        game.clearGenerations();
+        Generation generation = new Generation(game, board, 0);
+
+        
+        for (Map.Entry<Coord, CellType> entry : cellTypesMap.entrySet()) {
+            generation.setType(List.of(entry.getKey()), entry.getValue());
+        }
+
+        game.addGeneration(generation, 0);
+        return generation;
     }
 
     /**
@@ -305,6 +341,7 @@ public class Generation {
      * @return a Map from Cell to its Integer lifePoints value
      */
     public Map<Cell, Integer> getEnergyStates() {
+<<<<<<< HEAD
         Map<Cell, Integer> energyMap = new HashMap<>();
         for (Tile tile : board.getTiles()) {
             Cell cell = tile.getCell();
@@ -313,6 +350,10 @@ public class Generation {
             }
         }
         return Map.copyOf(energyMap);
+=======
+        return Map.copyOf(cellAlivenessStates.keySet().stream()
+            .collect(Collectors.toMap(cell -> cell, Cell::getLifePoints)));
+>>>>>>> 43f1ba8c82ff69c0d35e35fa407fccb8f08599a0
     }
 
     /**
@@ -322,8 +363,7 @@ public class Generation {
      *         = dead)
      */
     public Map<Cell, Boolean> getCellAlivenessStates() {
-        // TODO: create aliveness states getter
-        return null;
+        return Map.copyOf(cellAlivenessStates);
     }
 
     /**
@@ -334,8 +374,8 @@ public class Generation {
      * @throws UnsupportedOperationException until implemented
      */
     public Map<Cell, CellMood> getMoodStates() {
-        // TODO: create mood states getter
-        return null;
+        return Map.copyOf(cellAlivenessStates.keySet().stream()
+            .collect(Collectors.toMap(cell -> cell, Cell::getMood)));
     }
 
     /**
