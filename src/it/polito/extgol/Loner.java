@@ -15,4 +15,19 @@ public class Loner extends Cell{
         super(coord, tile, board, game);
         this.cellType = CellType.LONER;
     }
+
+    @Override
+    public Boolean evolve(int aliveNeighbors) {
+        Boolean willLive = this.isAlive;
+        if (aliveNeighbors > 3) {
+            this.lifepoints--;
+            willLive = false;
+        }
+        else if (aliveNeighbors < 1) {
+            this.lifepoints--;
+            willLive = false;
+        }
+        if (willLive) this.lifepoints++;
+        return willLive;
+    }
 }

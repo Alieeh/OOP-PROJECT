@@ -14,4 +14,19 @@ public class Social extends Cell {
         super(coord, tile, board, game);
         this.cellType = CellType.SOCIAL;
     }
+
+
+    @Override
+    public Boolean evolve(int aliveNeighbors) {
+        Boolean willLive = this.isAlive;
+        if (aliveNeighbors > 8) {
+            willLive = false;
+        }
+        else if (aliveNeighbors < 2) {
+            willLive = false;
+        }
+
+        if (willLive) this.lifepoints++;
+        return willLive;
+    }
 }
