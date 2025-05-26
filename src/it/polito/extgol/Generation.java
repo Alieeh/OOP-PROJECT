@@ -305,8 +305,14 @@ public class Generation {
      * @return a Map from Cell to its Integer lifePoints value
      */
     public Map<Cell, Integer> getEnergyStates() {
-        // TODO: create energy states getter
-        return null;
+        Map<Cell, Integer> energyMap = new HashMap<>();
+        for (Tile tile : board.getTiles()) {
+            Cell cell = tile.getCell();
+            if (cell != null) {
+                energyMap.put(cell, cell.getLifePoints());
+            }
+        }
+        return Map.copyOf(energyMap);
     }
 
     /**

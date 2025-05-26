@@ -49,9 +49,10 @@ public class Cell implements Evolvable, Interactable {
     protected Boolean isAlive = false;
 
     /** Persisted lifepoints (default 0) */
-    @Column(name = "lifepoints", nullable = false)
-    protected Integer lifepoints = 0;
-
+    // Make sure this field is properly defined
+    @Column(name = "life_points", nullable = false)
+    private Integer lifepoints = 0;
+    
     /** Reference to the parent board (read-only). */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "board_id", nullable = false, updatable = false)
@@ -115,23 +116,47 @@ public class Cell implements Evolvable, Interactable {
      */
     @Override
     public Boolean evolve(int aliveNeighbors) {
-        // Start by assuming the cell retains its current state
         Boolean willLive = this.isAlive;
+        this.lifepoints += tile.getLifePointModifier();
 
-        // Overpopulation: more than 3 neighbors kills a live cell
-        if (aliveNeighbors > 3) {
-            willLive = false;
+        List<Tile> sortedNeighbors = new ArrayList<>(getNeighbors());
+        sortedNeighbors.sort((a, b) -> {
+            int cmpY = Integer.compare(a.getY(), b.getY());
+            return (cmpY != 0) ? cmpY : Integer.compare(a.getX(), b.getX());
+        });
+
+        for (Tile t : sortedNeighbors) {
+            Cell neighborCell = t.getCell();
+            if (neighborCell != null && neighborCell.isAlive()) {
+                this.interact(neighborCell);
+            }
         }
-        // Underpopulation: fewer than 2 neighbors kills a live cell
-        else if (aliveNeighbors < 2) {
-            willLive = false;
-        }
-        // Respawn: exactly 3 neighbors brings a dead cell to life
-        else if (!this.isAlive && aliveNeighbors == 3) {
+
+        if (!this.isAlive && aliveNeighbors == 3) {
             willLive = true;
+            this.lifepoints = 0;
+        } else if (this.isAlive) {
+            boolean deathByUnderpop = aliveNeighbors < 2;
+            boolean deathByOverpop = aliveNeighbors > 3;
+
+            if (cellType == CellType.LONER) {
+                deathByUnderpop = aliveNeighbors < 1;
+            }
+            if (cellType == CellType.SOCIAL) {
+                deathByOverpop = aliveNeighbors > 8;
+            }
+
+            if (deathByUnderpop || deathByOverpop) {
+                willLive = false;
+                this.lifepoints--;
+            } else {
+                this.lifepoints++;
+            }
         }
-        // Otherwise (2 or 3 neighbors on a live cell) nothing changes and willLive
-        // remains true
+
+        if (lifepoints < 0) {
+            willLive = false;
+        }
 
         return willLive;
     }
@@ -147,6 +172,7 @@ public class Cell implements Evolvable, Interactable {
     public List<Tile> getNeighbors() {
         return List.copyOf(tile.getNeighbors());
     }
+    
 
     /**
      * Counts the number of live cells adjacent to this cell’s tile.
@@ -258,8 +284,7 @@ public class Cell implements Evolvable, Interactable {
      * @return the number of life points the cell currently has
      */
     public int getLifePoints() {
-        // TODO Auto-generated method stub
-        return 0;
+        return lifepoints;
     }
 
     /**
@@ -268,7 +293,7 @@ public class Cell implements Evolvable, Interactable {
      * @param lifePoints the new number of life points to assign to the cell
      */
     public void setLifePoints(int lifePoints) {
-        // TODO Auto-generated method stub
+        this.lifepoints = lifePoints;
     }
 
     /**
@@ -285,14 +310,14 @@ public class Cell implements Evolvable, Interactable {
     }
 
     /**
-     * Assigns a specific cell type to this cell, influencing its behavior.
-     *
-     * @param t the CellType to set (e.g., BASIC, HIGHLANDER, LONER, SOCIAL)
-     */
-    public void setType(CellType t) {
-        // TODO Auto-generated method stub
-    }
-
+     * Cell type that determines evolution behavior */
+    @Column(name = "cell_type", nullable = false)
+    protected CellType cellType = CellType.BASIC;
+    
+    /** Cell mood that determines interaction behavior */
+    @Column(name = "cell_mood", nullable = false)
+    protected CellMood cellMood = CellMood.NAIVE;
+    
     /**
      * Sets the current mood of this cell, impacting how it interacts with others.
      *
@@ -311,5 +336,22 @@ public class Cell implements Evolvable, Interactable {
         // TODO Auto-generated method stub
         return null;
     }
-
+    
+    /**
+     * Retrieves the current type of this cell.
+     *
+     * @return the CellType representing the cell's evolution behavior
+     */
+    public CellType getCellType() {
+        return this.cellType;
+    }
+    
+    /**
+     * Assigns a specific cell type to this cell, influencing its behavior.
+     *
+     * @param t the CellType to set (e.g., BASIC, HIGHLANDER, LONER, SOCIAL)
+     */
+    public void setType(CellType t) {
+        this.cellType = t;
+    }
 }
