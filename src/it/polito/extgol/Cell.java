@@ -133,50 +133,30 @@ public class Cell implements Evolvable, Interactable {
      */
     @Override
     public Boolean evolve(int aliveNeighbors) {
+        // Start by assuming the cell retains its current state
         Boolean willLive = this.isAlive;
-        this.lifepoints += tile.getLifePointModifier();
 
-        List<Tile> sortedNeighbors = new ArrayList<>(getNeighbors());
-        sortedNeighbors.sort((a, b) -> {
-            int cmpY = Integer.compare(a.getY(), b.getY());
-            return (cmpY != 0) ? cmpY : Integer.compare(a.getX(), b.getX());
-        });
-
-        for (Tile t : sortedNeighbors) {
-            Cell neighborCell = t.getCell();
-            if (neighborCell != null && neighborCell.isAlive()) {
-                this.interact(neighborCell);
-            }
-        }
-
-        if (!this.isAlive && aliveNeighbors == 3) {
-            willLive = true;
-            this.lifepoints = 0;
-        } else if (this.isAlive) {
-            boolean deathByUnderpop = aliveNeighbors < 2;
-            boolean deathByOverpop = aliveNeighbors > 3;
-
-            if (cellType == CellType.LONER) {
-                deathByUnderpop = aliveNeighbors < 1;
-            }
-            if (cellType == CellType.SOCIAL) {
-                deathByOverpop = aliveNeighbors > 8;
-            }
-
-            if (deathByUnderpop || deathByOverpop) {
-                willLive = false;
-                this.lifepoints--;
-            } else {
-                this.lifepoints++;
-            }
-        }
-
-        if (lifepoints < 0) {
+        // Overpopulation: more than 3 neighbors kills a live cell
+        if (aliveNeighbors > 3) {
+            this.lifepoints--;
             willLive = false;
         }
-
+        // Underpopulation: fewer than 2 neighbors kills a live cell
+        else if (aliveNeighbors < 2) {
+            this.lifepoints--;
+            willLive = false;
+        }
+        // Respawn: exactly 3 neighbors brings a dead cell to life
+        else if (!this.isAlive && aliveNeighbors == 3) {
+            this.lifepoints = 0;
+            willLive = true;
+        }
+        // Otherwise (2 or 3 neighbors on a live cell) nothing changes and willLive
+        // remains true
+        if (willLive) this.lifepoints++;
         return willLive;
     }
+
 
     /**
      * Retrieves all tiles adjacent to this cell's tile.

@@ -23,10 +23,16 @@ public class Highlander extends Cell {
         Boolean baseEvolve = super.evolve(aliveNeighbors);
         if (!baseEvolve && this.isAlive) {
             deathTurns++;
-            if (deathTurns <= 2) return true;
+            if (deathTurns <= 2){
+                this.lifepoints++;
+                return true;
+            }
+            this.lifepoints--;
             return false;
+            
         } else {
             deathTurns = 0;
+            this.lifepoints++;
             return baseEvolve;
         }
     }
