@@ -341,19 +341,8 @@ public class Generation {
      * @return a Map from Cell to its Integer lifePoints value
      */
     public Map<Cell, Integer> getEnergyStates() {
-<<<<<<< HEAD
-        Map<Cell, Integer> energyMap = new HashMap<>();
-        for (Tile tile : board.getTiles()) {
-            Cell cell = tile.getCell();
-            if (cell != null) {
-                energyMap.put(cell, cell.getLifePoints());
-            }
-        }
-        return Map.copyOf(energyMap);
-=======
         return Map.copyOf(cellAlivenessStates.keySet().stream()
             .collect(Collectors.toMap(cell -> cell, Cell::getLifePoints)));
->>>>>>> 43f1ba8c82ff69c0d35e35fa407fccb8f08599a0
     }
 
     /**

@@ -1,5 +1,6 @@
 package it.polito.extgol;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IntSummaryStatistics;
@@ -223,51 +224,23 @@ public class Board {
     
     /**
      * Visualizes the given Generation by mapping alive and dead cells onto a character grid.
-     * Dead cells are represented by '0'.
-     * Alive cells are represented by their type:
-     * - Cell: 'C'
-     * - Highlander: 'H'
-     * - Loner: 'L'
-     * - Social: 'S'
+     * Alive cells are represented by 'C' and dead cells by '0'.
      * Each row of the board is separated by a newline character.
      *
      * @param generation the Generation object containing the current cell states
      * @return a multi-line String representing the board, where each line corresponds to a row (y-coordinate)
      */
     public String visualize(Generation generation) {
+        Set<Coord> alive = generation.getAliveCells().stream()
+            .map(Cell::getCoordinates)
+            .collect(Collectors.toSet());
+    
         StringBuilder sb = new StringBuilder();
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                Coord currentCoord = new Coord(x, y);
-                Tile currentTile = getTile(currentCoord);
-                Cell currentCell = currentTile.getCell();
-                
-                if (currentCell != null && currentCell.isAlive()) {
-                    // Determine the character based on cell type
-                    CellType cellType = currentCell.getCellType();
-                    char cellChar;
-                    
-                    switch (cellType) {
-                        case HIGHLANDER:
-                            cellChar = 'H';
-                            break;
-                        case LONER:
-                            cellChar = 'L';
-                            break;
-                        case SOCIAL:
-                            cellChar = 'S';
-                            break;
-                        default:
-                            cellChar = 'C'; // Default for basic cells
-                            break;
-                    }
-                    
-                    sb.append(cellChar);
-                } else {
-                    sb.append('0'); // Dead cell
-                }
+                sb.append(alive.contains(new Coord(x, y)) ? 'C' : '0');
             }
-            // Don't append a newline after the last row
+            // use height here so you don't append a newline after the last row
             if (y < height - 1) {
                 sb.append(System.lineSeparator());
             }
@@ -297,8 +270,8 @@ public class Board {
      * @param gen the Generation instance to analyze
      * @return the count of alive cells in gen
      */
-    public Integer countCells(Generation gen) {
-        return gen.getAliveCells().size();
+    public Integer countCells(Generation generation) {
+        return generation.getAliveCells().size();
     }
 
     /**
@@ -308,27 +281,30 @@ public class Board {
      * @param gen the Generation instance to analyze
      * @return the Cell with maximum lifePoints, or null if no cells are alive
      */
-    public Cell getHighestEnergyCell(Generation gen) {
-        Set<Cell> aliveCells = gen.getAliveCells();
-        if (aliveCells.isEmpty()) {
+    /**
+     * Returns the cell with the highest energy level in the given generation.
+     *
+     * @param generation the generation to analyze
+     * @return the Cell with the highest lifePoints value, or null if no cells are alive
+     */
+    public Cell getHighestEnergyCell(Generation generation) {
+        Map<Cell, Integer> energyStates = generation.getEnergyStates();
+        
+        if (energyStates.isEmpty()) {
             return null;
         }
         
-        return aliveCells.stream()
-            .max((c1, c2) -> {
-                int energyComparison = Integer.compare(c1.getLifePoints(), c2.getLifePoints());
-                if (energyComparison != 0) {
-                    return energyComparison;
-                }
-                // In case of tie, pick the one closer to top-left corner
-                // First compare y (row), then x (column)
-                int rowComparison = Integer.compare(c2.getY(), c1.getY()); // Smaller Y is closer to top
-                if (rowComparison != 0) {
-                    return rowComparison;
-                }
-                return Integer.compare(c2.getX(), c1.getX()); // Smaller X is closer to left
-            })
-            .orElse(null);
+        Cell highestEnergyCell = null;
+        int maxEnergy = Integer.MIN_VALUE;
+        
+        for (Map.Entry<Cell, Integer> entry : energyStates.entrySet()) {
+            if (entry.getValue() > maxEnergy) {
+                maxEnergy = entry.getValue();
+                highestEnergyCell = entry.getKey();
+            }
+        }
+        
+        return highestEnergyCell;
     }
 
     /**
@@ -338,8 +314,18 @@ public class Board {
      * @return a Map from lifePoints value to the List of Cells having that energy
      */
     public Map<Integer, List<Cell>> getCellsByEnergyLevel(Generation gen) {
-        return gen.getAliveCells().stream()
-            .collect(Collectors.groupingBy(Cell::getLifePoints));
+        Map<Integer, List<Cell>> cellsByEnergy = new HashMap<>();
+        Map<Cell, Integer> energyStates = gen.getEnergyStates();
+        
+        for (Map.Entry<Cell, Integer> entry : energyStates.entrySet()) {
+            Cell cell = entry.getKey();
+            Integer energy = entry.getValue();
+            
+            // Add the cell to the appropriate energy level group
+            cellsByEnergy.computeIfAbsent(energy, k -> new ArrayList<>()).add(cell);
+        }
+        
+        return cellsByEnergy;
     }
 
     /**
@@ -349,11 +335,8 @@ public class Board {
      * @return a Map from CellType to the count of alive cells of that type
      */
     public Map<CellType, Integer> countCellsByType(Generation gen) {
-        return gen.getAliveCells().stream()
-            .collect(Collectors.groupingBy(
-                Cell::getCellType,
-                Collectors.summingInt(cell -> 1)
-            ));
+        // TODO: query or iterate to count alive cells by CellType
+        return null;
     }
 
     /**
@@ -364,9 +347,12 @@ public class Board {
      * @return a List of the top n Cells by lifePoints, in descending order
      */
     public List<Cell> topEnergyCells(Generation gen, int n) {
-        return gen.getAliveCells().stream()
-            .sorted((c1, c2) -> Integer.compare(c2.getLifePoints(), c1.getLifePoints())) // Descending order
+        Map<Cell, Integer> energyStates = gen.getEnergyStates();
+        
+        return energyStates.entrySet().stream()
+            .sorted(Map.Entry.<Cell, Integer>comparingByValue().reversed())
             .limit(n)
+            .map(Map.Entry::getKey)
             .collect(Collectors.toList());
     }
 
@@ -377,8 +363,16 @@ public class Board {
      * @return a Map from neighbor count to the List of Cells having that many alive neighbors
      */
     public Map<Integer, List<Cell>> groupByAliveNeighborCount(Generation gen) {
-        return gen.getAliveCells().stream()
-            .collect(Collectors.groupingBy(Cell::countAliveNeighbors));
+        Map<Integer, List<Cell>> cellsByNeighborCount = new HashMap<>();
+        
+        for (Cell cell : gen.getAliveCells()) {
+            int aliveNeighbors = cell.countAliveNeighbors();
+            
+            // Add the cell to the appropriate neighbor count group
+            cellsByNeighborCount.computeIfAbsent(aliveNeighbors, k -> new ArrayList<>()).add(cell);
+        }
+        
+        return cellsByNeighborCount;
     }
 
     /**
@@ -388,8 +382,23 @@ public class Board {
      * @return an IntSummaryStatistics with aggregated lifePoints metrics
      */
     public IntSummaryStatistics energyStatistics(Generation gen) {
-        return gen.getAliveCells().stream()
-            .mapToInt(Cell::getLifePoints)
+        Set<Cell> aliveCells = gen.getAliveCells();
+        Map<Cell, Integer> energyStates = gen.getEnergyStates();
+        
+        if (aliveCells.isEmpty()) {
+            return new IntSummaryStatistics();
+        }
+        
+        // For initial generation (step 0), all cells have 1 lifePoint
+        if (gen.getStep() == 0) {
+            return aliveCells.stream()
+                .mapToInt(c -> 1)
+                .summaryStatistics();
+        }
+        
+        // For subsequent generations, include both alive and dead cells' energy states
+        return energyStates.values().stream()
+            .mapToInt(Integer::intValue)
             .summaryStatistics();
     }
 
@@ -401,15 +410,18 @@ public class Board {
      * @return a Map from generation step index to its IntSummaryStatistics
      */
     public Map<Integer, IntSummaryStatistics> getTimeSeriesStats(int fromStep, int toStep) {
-        Map<Integer, IntSummaryStatistics> result = new HashMap<>();
+        Map<Integer, IntSummaryStatistics> timeSeriesStats = new HashMap<>();
         
-        for (int step = fromStep; step <= toStep; step++) {
-            Generation gen = game.getGeneration(step);
-            if (gen != null) {
-                result.put(step, energyStatistics(gen));
-            }
+        // Get all generations from the game
+        List<Generation> generations = game.getGenerations();
+        
+        // Iterate through the specified range of generations
+        for (int step = fromStep; step <= toStep && step < generations.size(); step++) {
+            Generation gen = generations.get(step);
+            // Compute and store statistics for this generation
+            timeSeriesStats.put(step, energyStatistics(gen));
         }
         
-        return result;
+        return timeSeriesStats;
     }
 }

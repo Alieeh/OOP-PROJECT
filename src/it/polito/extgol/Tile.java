@@ -17,14 +17,13 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Transient;
-import jakarta.persistence.criteria.CriteriaBuilder.In;
 
 /**
  * Entity representing a single square on the Game of Life board.
  * Holds coordinate position, occupying Cell, and link back to its Board.
  */
 @Entity
-public class Tile implements Interactable{
+public class Tile implements Interactable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -64,10 +63,6 @@ public class Tile implements Interactable{
     /** Neighboring tiles for interactions. Not persisted. */
     @Transient
     private Set<Tile> neighbors = new HashSet<Tile>();
-    
-    /** Life point modifier for this tile. */
-    @Column(name = "life_point_modifier", nullable = false)
-    private Integer lifePointModifier = 0;
 
 
     @Column(name = "life_modifier", nullable = false)
@@ -199,35 +194,9 @@ public class Tile implements Interactable{
      * A positive value grants extra energy to the cell each generation, while
      * a negative value drains energy. A zero value has no effect.
      *
-     * @return the integer modifier to a cell's lifePoints when evolving
+     * @return the integer modifier to a cell’s lifePoints when evolving
      */
     public Integer getLifePointModifier() {
-<<<<<<< HEAD
-        return this.lifePointModifier;
-    }
-    
-    /**
-     * Sets the life point modifier value for this tile.
-     * 
-     * @param modifier the life point modifier value to set
-     */
-    public void setLifePointModifier(Integer modifier) {
-        this.lifePointModifier = modifier;
-    }
-    
-    /**
-     * Implements the interact method from the Interactable interface.
-     * For tiles, this applies the lifePointModifier to the cell.
-     *
-     * @param cell the cell to interact with
-     */
-    public void interact(Cell cell) {
-        if (cell != null && cell.isAlive()) {
-            int currentLifePoints = cell.getLifePoints();
-            cell.setLifePoints(currentLifePoints + this.lifePointModifier);
-        }
-    }
-=======
         return lifePointModifier;
     }
 
@@ -236,5 +205,4 @@ public class Tile implements Interactable{
 }
     
 
->>>>>>> 43f1ba8c82ff69c0d35e35fa407fccb8f08599a0
 }
