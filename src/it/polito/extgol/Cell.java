@@ -56,12 +56,6 @@ public class Cell implements Evolvable, Interactable {
     protected Boolean isAlive = false;
 
     /** Persisted lifepoints (default 0) */
-<<<<<<< HEAD
-    // Make sure this field is properly defined
-    @Column(name = "life_points", nullable = false)
-    private Integer lifepoints = 0;
-    
-=======
     @Column(name = "lifepoints", nullable = false)
     protected Integer lifepoints = 0;
 
@@ -76,7 +70,6 @@ public class Cell implements Evolvable, Interactable {
     protected CellMood cellMood = CellMood.NAIVE;
 
 
->>>>>>> 43f1ba8c82ff69c0d35e35fa407fccb8f08599a0
     /** Reference to the parent board (read-only). */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "board_id", nullable = false, updatable = false)
@@ -140,50 +133,9 @@ public class Cell implements Evolvable, Interactable {
      */
     @Override
     public Boolean evolve(int aliveNeighbors) {
+        // Start by assuming the cell retains its current state
         Boolean willLive = this.isAlive;
-        this.lifepoints += tile.getLifePointModifier();
 
-        List<Tile> sortedNeighbors = new ArrayList<>(getNeighbors());
-        sortedNeighbors.sort((a, b) -> {
-            int cmpY = Integer.compare(a.getY(), b.getY());
-            return (cmpY != 0) ? cmpY : Integer.compare(a.getX(), b.getX());
-        });
-
-        for (Tile t : sortedNeighbors) {
-            Cell neighborCell = t.getCell();
-            if (neighborCell != null && neighborCell.isAlive()) {
-                this.interact(neighborCell);
-            }
-        }
-
-<<<<<<< HEAD
-        if (!this.isAlive && aliveNeighbors == 3) {
-            willLive = true;
-            this.lifepoints = 0;
-        } else if (this.isAlive) {
-            boolean deathByUnderpop = aliveNeighbors < 2;
-            boolean deathByOverpop = aliveNeighbors > 3;
-
-            if (cellType == CellType.LONER) {
-                deathByUnderpop = aliveNeighbors < 1;
-            }
-            if (cellType == CellType.SOCIAL) {
-                deathByOverpop = aliveNeighbors > 8;
-            }
-
-            if (deathByUnderpop || deathByOverpop) {
-                willLive = false;
-                this.lifepoints--;
-            } else {
-                this.lifepoints++;
-            }
-        }
-
-        if (lifepoints < 0) {
-            willLive = false;
-        }
-
-=======
         // Overpopulation: more than 3 neighbors kills a live cell
         if (aliveNeighbors > 3) {
             this.lifepoints--;
@@ -202,7 +154,6 @@ public class Cell implements Evolvable, Interactable {
         // Otherwise (2 or 3 neighbors on a live cell) nothing changes and willLive
         // remains true
         if (willLive) this.lifepoints++;
->>>>>>> 43f1ba8c82ff69c0d35e35fa407fccb8f08599a0
         return willLive;
     }
 
@@ -218,7 +169,6 @@ public class Cell implements Evolvable, Interactable {
     public List<Tile> getNeighbors() {
         return List.copyOf(tile.getNeighbors());
     }
-    
 
     /**
      * Counts the number of live cells adjacent to this cell’s tile.
@@ -330,11 +280,7 @@ public class Cell implements Evolvable, Interactable {
      * @return the number of life points the cell currently has
      */
     public int getLifePoints() {
-<<<<<<< HEAD
-        return lifepoints;
-=======
         return this.lifepoints;
->>>>>>> 43f1ba8c82ff69c0d35e35fa407fccb8f08599a0
     }
 
     /**
@@ -384,16 +330,6 @@ public class Cell implements Evolvable, Interactable {
     }
 
     /**
-<<<<<<< HEAD
-     * Cell type that determines evolution behavior */
-    @Column(name = "cell_type", nullable = false)
-    protected CellType cellType = CellType.BASIC;
-    
-    /** Cell mood that determines interaction behavior */
-    @Column(name = "cell_mood", nullable = false)
-    protected CellMood cellMood = CellMood.NAIVE;
-    
-=======
      * Assigns a specific cell type to this cell, influencing its behavior.
      *
      * @param t the CellType to set (e.g., BASIC, HIGHLANDER, LONER, SOCIAL)
@@ -402,7 +338,6 @@ public class Cell implements Evolvable, Interactable {
         this.cellType = t;
     }
 
->>>>>>> 43f1ba8c82ff69c0d35e35fa407fccb8f08599a0
     /**
      * Sets the current mood of this cell, impacting how it interacts with others.
      *
@@ -420,22 +355,5 @@ public class Cell implements Evolvable, Interactable {
     public CellMood getMood() {
         return this.cellMood;
     }
-    
-    /**
-     * Retrieves the current type of this cell.
-     *
-     * @return the CellType representing the cell's evolution behavior
-     */
-    public CellType getCellType() {
-        return this.cellType;
-    }
-    
-    /**
-     * Assigns a specific cell type to this cell, influencing its behavior.
-     *
-     * @param t the CellType to set (e.g., BASIC, HIGHLANDER, LONER, SOCIAL)
-     */
-    public void setType(CellType t) {
-        this.cellType = t;
-    }
+
 }
