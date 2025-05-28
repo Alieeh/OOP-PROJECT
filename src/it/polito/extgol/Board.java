@@ -268,14 +268,8 @@ public class Board {
         }
         
         // Create a new tile that implements Interactable
-        Tile interactableTile = new Tile(existingTile.getX(), existingTile.getY(), board, board.game) {
-            private Integer modifier = lifePointsModifier;
-            
-            @Override
-            public Integer getLifePointModifier() {
-                return modifier;
-            }
-        };
+        Tile interactableTile = new Tile(existingTile.getX(), existingTile.getY(), board, board.game);
+        interactableTile.setLifePointModifier(lifePointsModifier);
         
         // Copy the cell from the existing tile
         interactableTile.setCell(existingTile.getCell());
@@ -286,7 +280,19 @@ public class Board {
         // Replace the existing tile in the board's tiles map
         board.tiles.put(coord, interactableTile);
         
-        return (Interactable) interactableTile;
+        // Update the neighbor references in surrounding tiles to point to this new tile
+        Set<Tile> adjacentTiles = board.getAdjacentTiles(interactableTile);
+        for (Tile neighbor : adjacentTiles) {
+            Set<Tile> neighborTiles = neighbor.getNeighbors();
+            // Remove the old tile reference
+            neighborTiles.remove(existingTile);
+            // Add the new tile reference
+            neighborTiles.add(interactableTile);
+            // Update the neighbor's neighbors
+            neighbor.initializeNeighbors(neighborTiles);
+        }
+        
+        return interactableTile;
     }
 
     /**
