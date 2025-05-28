@@ -233,7 +233,7 @@ public class Board {
         Set<Coord> alive = generation.getAliveCells().stream()
             .map(Cell::getCoordinates)
             .collect(Collectors.toSet());
-    
+
         StringBuilder sb = new StringBuilder();
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {

@@ -125,12 +125,23 @@ public class ExtendedGameOfLife {
      * @return          The same Game instance, now containing the extended generation history.
      */
     public Game run(Game game, int steps, Map<Integer, EventType> eventMap) {
-        // TODO: implement for R3
-        return null;
-    }
+        Generation currentGen = game.getStart();
+        Map<Integer, EventType> oldEvents = game.getEventMapInternal();
+        for (int i = 0; i < steps; i++) {
+            EventType event = eventMap.get(i);
+            oldEvents.put(i, event); 
+            if (event != null) {
+                for (Tile tile : currentGen.getBoard().getTiles()) {
+                    game.unrollEvent(event, tile.getCell()); //we apply the events to each cell
+                }
+            }
 
-    /**
-     * Builds and returns a map associating each coordinate with its alive Cell 
+            Generation next = evolve(currentGen);
+            currentGen = next;
+        }
+        return game;
+    }
+     /* Builds and returns a map associating each coordinate with its alive Cell 
      * instance for the specified generation.
      *
      * Iterates over all alive cells present in the given generation and constructs 
