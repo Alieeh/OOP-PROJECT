@@ -26,7 +26,6 @@ public class Social extends Cell {
             willLive = false;
         }
 
-        if (willLive) this.lifepoints++;
         return willLive;
     }
 }
