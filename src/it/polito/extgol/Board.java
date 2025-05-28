@@ -231,32 +231,33 @@ public class Board {
      * @return a multi-line String representing the board, where each line corresponds to a row (y-coordinate)
      */
     public String visualize(Generation generation) {
-    Map<Coord, CellType> coordToType = generation.getAliveCells().stream()
-        .collect(Collectors.toMap(Cell::getCoordinates, Cell::getCellType));
-
-    StringBuilder sb = new StringBuilder();
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            Coord coord = new Coord(x, y);
-            CellType type = coordToType.get(coord);
-            char c;
-            if (type == null) {
-                c = '0';
-            } else {
-                switch (type) {
-                    case BASIC:      c = 'C'; break;
-                    case HIGHLANDER: c = 'H'; break;
-                    case SOCIAL:     c = 'S'; break;
-                    case LONER:      c = 'L'; break;
-                    default:         c = '?'; break;
+      
+        Map<Coord, CellType> coordToType = generation.getAliveCells().stream()
+            .collect(Collectors.toMap(Cell::getCoordinates, Cell::getType));
+    
+        StringBuilder sb = new StringBuilder();
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                Coord coord = new Coord(x, y);
+                CellType type = coordToType.get(coord);
+                char c;
+                if (type == null) {
+                    c = '0';
+                } else {
+                    switch (type) {
+                        case BASIC:      c = 'C'; break;
+                        case HIGHLANDER: c = 'H'; break;
+                        case SOCIAL:     c = 'S'; break;
+                        case LONER:      c = 'L'; break;
+                        default:         c = '?'; break;
+                    }
+                }
+                sb.append(c);
+                }
+                if (y < height - 1) {
+                    sb.append(System.lineSeparator());
                 }
             }
-            sb.append(c);
-            }
-            if (y < height - 1) {
-                sb.append(System.lineSeparator());
-            }
-        }
         return sb.toString();
     }
 
@@ -378,8 +379,19 @@ public class Board {
      * @return a Map from CellType to the count of alive cells of that type
      */
     public Map<CellType, Integer> countCellsByType(Generation gen) {
-        // TODO: query or iterate to count alive cells by CellType
-        return null;
+        Map<CellType, Integer> cellCountByType = new HashMap<>();
+        
+        // Get all alive cells in the generation
+        Set<Cell> aliveCells = gen.getAliveCells();
+        
+        // Count cells by type
+        for (Cell cell : aliveCells) {
+            CellType type = cell.getType();
+            // Increment the count for this type (or initialize to 1 if not present)
+            cellCountByType.put(type, cellCountByType.getOrDefault(type, 0) + 1);
+        }
+        
+        return cellCountByType;
     }
 
     /**

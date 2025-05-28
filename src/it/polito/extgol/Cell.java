@@ -339,7 +339,20 @@ public class Cell implements Evolvable, Interactable {
         default -> {
             // nothing happens
         }
+    }
+
+    /**
+    * returns the CellType to set (e.g., BASIC, HIGHLANDER, LONER, SOCIAL)
+    */
+    }
+    public CellType getType() {
+        String className = this.getClass().getSimpleName().toUpperCase();
+        for (CellType type : CellType.values()) {
+            if (className.contains(type.name())) {
+                return type;
+            }
         }
+        return CellType.BASIC;
     }
 
     /**
