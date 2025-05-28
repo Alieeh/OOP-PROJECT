@@ -73,7 +73,7 @@ public class Tile implements Interactable {
      */
     public Tile() {
     }
-
+    
     /**
      * Constructs a tile at the given coordinates,
      * and the respective cell initialized as not alive
@@ -85,6 +85,11 @@ public class Tile implements Interactable {
         this.board = b;
         this.game = g;
         this.cell = new Cell(this.tileCoord, this, b, g);
+    }
+
+    @Override
+    public void interact(Cell cell) {
+        /*****/
     }
 
     /**
