@@ -231,22 +231,34 @@ public class Board {
      * @return a multi-line String representing the board, where each line corresponds to a row (y-coordinate)
      */
     public String visualize(Generation generation) {
-        Set<Coord> alive = generation.getAliveCells().stream()
-            .map(Cell::getCoordinates)
-            .collect(Collectors.toSet());
+    Map<Coord, CellType> coordToType = generation.getAliveCells().stream()
+        .collect(Collectors.toMap(Cell::getCoordinates, Cell::getCellType));
 
-        StringBuilder sb = new StringBuilder();
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                sb.append(alive.contains(new Coord(x, y)) ? 'C' : '0');
+    StringBuilder sb = new StringBuilder();
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            Coord coord = new Coord(x, y);
+            CellType type = coordToType.get(coord);
+            char c;
+            if (type == null) {
+                c = '0';
+            } else {
+                switch (type) {
+                    case BASIC:      c = 'C'; break;
+                    case HIGHLANDER: c = 'H'; break;
+                    case SOCIAL:     c = 'S'; break;
+                    case LONER:      c = 'L'; break;
+                    default:         c = '?'; break;
+                }
             }
-            // use height here so you don't append a newline after the last row
+            sb.append(c);
+            }
             if (y < height - 1) {
                 sb.append(System.lineSeparator());
             }
         }
         return sb.toString();
-}
+    }
 
     // EXTENDED BEHAVIORS
 

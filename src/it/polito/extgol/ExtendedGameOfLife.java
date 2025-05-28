@@ -99,6 +99,13 @@ public class ExtendedGameOfLife {
         // Step 4: Persist snapshot of the next generation state
         nextGen.snapCells();
 
+        for (Tile tile : board.getTiles()) {
+            Cell c = tile.getCell();
+            if (c != null) {
+                c.applyPendingMood();
+            }
+        }
+
         return nextGen;
     }
 

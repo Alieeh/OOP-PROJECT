@@ -88,6 +88,9 @@ public class Cell implements Evolvable, Interactable {
     @OneToOne(mappedBy = "cell", fetch = FetchType.LAZY)
     protected Tile tile;
 
+    @Transient
+    private CellMood nextMood = null;
+
     /** Default constructor for JPA compliance. */
     public Cell() {
     }
@@ -288,6 +291,19 @@ public class Cell implements Evolvable, Interactable {
         this.lifepoints = lifePoints;
     }
 
+    public void markForMoodChange(CellMood mood) {
+        if (this.nextMood == null) {
+            this.nextMood = mood;
+        }
+    }
+
+    public void applyPendingMood() {
+        if (nextMood != null) {
+            this.cellMood = nextMood;
+            nextMood = null;
+        }
+    }
+
     /**
      * Implements the interact() method of Interactable to
      * define the interaction between this cell and another cell.
@@ -310,10 +326,11 @@ public class Cell implements Evolvable, Interactable {
             }
         }
         case VAMPIRE -> {
-            if (otherCell.cellMood == CellMood.NAIVE) {
+            if (otherCell.cellMood == CellMood.NAIVE && otherCell.lifepoints >= 0) {
                 otherCell.lifepoints -= 1;
-                otherCell.cellMood = CellMood.VAMPIRE;
                 this.lifepoints += 1;
+                otherCell.markForMoodChange(CellMood.VAMPIRE);
+
             } else if (otherCell.cellMood == CellMood.HEALER) {
                 otherCell.lifepoints -= 1;
                 this.lifepoints += 1;
@@ -322,7 +339,7 @@ public class Cell implements Evolvable, Interactable {
         default -> {
             // nothing happens
         }
-    }
+        }
     }
 
     /**
@@ -332,6 +349,16 @@ public class Cell implements Evolvable, Interactable {
      */
     public void setType(CellType t) {
         this.cellType = t;
+    }
+
+    public CellType getCellType() {
+        String className = this.getClass().getSimpleName().toUpperCase();
+        for (CellType type : CellType.values()) {
+            if (className.contains(type.name())) {
+                return type;
+            }
+        }
+        return CellType.BASIC;
     }
 
     /**
