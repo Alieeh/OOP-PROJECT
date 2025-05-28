@@ -20,14 +20,11 @@ public class Loner extends Cell{
     public Boolean evolve(int aliveNeighbors) {
         Boolean willLive = this.isAlive;
         if (aliveNeighbors > 3) {
-            this.lifepoints--;
             willLive = false;
         }
         else if (aliveNeighbors < 1) {
-            this.lifepoints--;
             willLive = false;
         }
-        if (willLive) this.lifepoints++;
         return willLive;
     }
 }

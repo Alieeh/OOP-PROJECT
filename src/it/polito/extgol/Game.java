@@ -6,13 +6,18 @@ import java.util.List;
 import java.util.Map;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.MapKeyColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.OrderColumn;
@@ -68,6 +73,13 @@ public class Game {
     )
     @OrderColumn(name = "generation_index")
     private List<Generation> generations = new ArrayList<>();
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "game_events", joinColumns = @JoinColumn(name = "game_id"))
+    @MapKeyColumn(name = "generation_step")
+    @Column(name = "event_type")
+    @Enumerated(EnumType.STRING)
+    private Map<Integer, EventType> eventMap = new HashMap<>();
 
     /**
      * Default constructor for JPA.
@@ -241,7 +253,35 @@ public class Game {
      * @param cell  the Cell instance to which the event should be applied
      */
     public void unrollEvent(EventType event, Cell cell) {
-        // TODO: implement event application logic
+        switch (event) { //we can use a switch case as the events are enumerated
+            case CATACLYSM:
+                cell.setLifePoints(0);
+                break;
+            case FAMINE:
+                cell.setLifePoints(cell.getLifePoints() - 1);
+                break;
+            case BLOOM:
+                cell.setLifePoints(cell.getLifePoints() + 2);
+                break;
+            case BLOOD_MOON:
+                if(cell.getMood() == CellMood.VAMPIRE){
+                    for (Tile tile : cell.getNeighbors()){
+                        Cell neighbor = tile.getCell();
+                        if (neighbor != null && neighbor.getMood() == CellMood.HEALER) {
+                            neighbor.setMood(CellMood.VAMPIRE); //convert the neighbor to a vampire
+                        }
+                    }
+                }
+                break;
+            case SANCTUARY:
+                if(cell.getMood() == CellMood.HEALER){
+                    cell.setLifePoints(cell.getLifePoints() + 1);
+                }
+                else if(cell.getMood() == CellMood.VAMPIRE){
+                    cell.setMood(CellMood.NAIVE); //convert the vampire to a naive
+                }
+                break;
+        }
     }
 
     /**
@@ -252,7 +292,7 @@ public class Game {
      * @param targetCoordinates the list of coordinates of cells to update
      */
     public void setMood(CellMood mood, List<Coord> targetCoordinates) {
-        // TODO: implement mood assignment for specified cells
+        //stated that we should ignore this method
     }
 
     /**
@@ -283,9 +323,9 @@ public class Game {
      *
      * @return a mutable Map from generation step to EventType
      */
+
     public Map<Integer, EventType> getEventMapInternal() {
-        // TODO: return the actual event schedule map
-        return new HashMap<>();
+        return eventMap;
     }
 
     /**
@@ -298,8 +338,12 @@ public class Game {
      * @return an immutable Map from generation step to EventType
      */
     public static Map<Integer, EventType> loadEvents(Game game) {
-        // TODO: implement repository loading
-        return null; 
+        GameRepository retrievedRepo = new GameRepository();
+        Game retrievedGame = retrievedRepo.load(game.getId());
+        if (retrievedGame == null) {
+            return Map.of(); //returning an empty map
+        }
+        return Map.copyOf(retrievedGame.getEventMapInternal());
     }
 
     /**

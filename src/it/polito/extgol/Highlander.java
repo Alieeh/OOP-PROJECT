@@ -24,15 +24,12 @@ public class Highlander extends Cell {
         if (!baseEvolve && this.isAlive) {
             deathTurns++;
             if (deathTurns <= 2){
-                this.lifepoints++;
                 return true;
             }
-            this.lifepoints--;
             return false;
             
         } else {
             deathTurns = 0;
-            this.lifepoints++;
             return baseEvolve;
         }
     }

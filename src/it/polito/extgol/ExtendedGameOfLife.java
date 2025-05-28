@@ -44,23 +44,16 @@ public class ExtendedGameOfLife {
 
         // Step 1: Compute next state for each cell based only on current generation state
         Map<Cell, Boolean> nextStates = new HashMap<>();
-        Map<Cell, Integer> lifePointsChanges = new HashMap<>();
+
         
         for (Tile tile : board.getTiles()) {
             Cell c = tile.getCell();
             if (c == null) {
                 throw new IllegalStateException("Missing cell on tile " + tile);
             }
-            
-            // Store the current lifePoints for later modification
-            int currentLifePoints = c.getLifePoints();
-            lifePointsChanges.put(c, currentLifePoints);
-            
-            // Apply tile modifier to alive cells
-            if (c.isAlive()) {
-                // Apply tile modifier to lifePoints
-                lifePointsChanges.put(c, currentLifePoints + tile.getLifePointModifier());
 
+            if (c.isAlive()) {
+                c.setLifePoints(c.getLifePoints() + tile.getLifePointModifier());
                 for (Tile neighborTile : tile.getNeighbors()) {
                     Cell neighbor = neighborTile.getCell();
                     if (neighbor != null && neighbor.isAlive()) {
@@ -75,23 +68,22 @@ public class ExtendedGameOfLife {
             int aliveNeighbors = c.countAliveNeighbors();
             boolean nextState = c.evolve(aliveNeighbors);
             
-            // Update lifePoints based on cell state changes and alive neighbors
-            int updatedLifePoints = lifePointsChanges.get(c);
-            
+            // Update lifePoints
+
             if (c.isAlive() && !nextState) {
                 // Cell dies - decrease lifePoints by 1
-                updatedLifePoints -= 1;
+                c.setLifePoints( c.getLifePoints() - 1);
             } else if (c.isAlive() && nextState) {
                 // Cell survives - increase lifePoints by 1 plus
-                updatedLifePoints += 1;
+                c.setLifePoints( c.getLifePoints() + 1);
             } else if (!c.isAlive() && nextState) {
                 // Cell respawns - reset lifePoints to 0 
-                updatedLifePoints = 0;
+                c.setLifePoints(0);
             }
             // Dead cells that stay dead don't change lifePoints
             
-            lifePointsChanges.put(c, updatedLifePoints);
             nextStates.put(c, nextState);
+
         }
 
         // Step 2: Instantiate the next Generation based on current
@@ -101,10 +93,6 @@ public class ExtendedGameOfLife {
         for (Map.Entry<Cell, Boolean> e : nextStates.entrySet()) {
             Cell c = e.getKey();
             c.setAlive(e.getValue());
-            
-            // Apply the stored lifePoints changes
-            c.setLifePoints(lifePointsChanges.get(c));
-            
             c.addGeneration(nextGen);  // register cell with new generation
         }
 
@@ -153,12 +141,23 @@ public class ExtendedGameOfLife {
      * @return          The same Game instance, now containing the extended generation history.
      */
     public Game run(Game game, int steps, Map<Integer, EventType> eventMap) {
-        // TODO: implement for R3
-        return null;
-    }
+        Generation currentGen = game.getStart();
+        Map<Integer, EventType> oldEvents = game.getEventMapInternal();
+        for (int i = 0; i < steps; i++) {
+            EventType event = eventMap.get(i);
+            oldEvents.put(i, event); 
+            if (event != null) {
+                for (Tile tile : currentGen.getBoard().getTiles()) {
+                    game.unrollEvent(event, tile.getCell()); //we apply the events to each cell
+                }
+            }
 
-    /**
-     * Builds and returns a map associating each coordinate with its alive Cell 
+            Generation next = evolve(currentGen);
+            currentGen = next;
+        }
+        return game;
+    }
+     /* Builds and returns a map associating each coordinate with its alive Cell 
      * instance for the specified generation.
      *
      * Iterates over all alive cells present in the given generation and constructs 

@@ -231,6 +231,7 @@ public class Board {
      * @return a multi-line String representing the board, where each line corresponds to a row (y-coordinate)
      */
     public String visualize(Generation generation) {
+      
         Map<Coord, CellType> coordToType = generation.getAliveCells().stream()
             .collect(Collectors.toMap(Cell::getCoordinates, Cell::getType));
     
