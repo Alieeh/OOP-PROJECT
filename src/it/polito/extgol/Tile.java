@@ -23,7 +23,7 @@ import jakarta.persistence.Transient;
  * Holds coordinate position, occupying Cell, and link back to its Board.
  */
 @Entity
-public class Tile {
+public class Tile implements Interactable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -73,7 +73,7 @@ public class Tile {
      */
     public Tile() {
     }
-
+    
     /**
      * Constructs a tile at the given coordinates,
      * and the respective cell initialized as not alive
@@ -85,6 +85,11 @@ public class Tile {
         this.board = b;
         this.game = g;
         this.cell = new Cell(this.tileCoord, this, b, g);
+    }
+
+    @Override
+    public void interact(Cell cell) {
+        /*****/
     }
 
     /**

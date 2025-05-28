@@ -345,4 +345,17 @@ public class Game {
         }
         return Map.copyOf(retrievedGame.getEventMapInternal());
     }
+
+    /**
+     * Retrieves a specific Generation by its step index.
+     *
+     * @param step the zero-based index of the generation to retrieve
+     * @return the Generation at the specified step, or null if the index is out of bounds
+     */
+    public Generation getGeneration(int step) {
+        if (step >= 0 && step < generations.size()) {
+            return generations.get(step);
+        }
+        return null;
+    }
 }
