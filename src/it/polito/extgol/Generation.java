@@ -69,6 +69,18 @@ public class Generation {
     @Column(name = "is_alive", nullable = false)
     private Map<Cell, Boolean> cellAlivenessStates = new HashMap<>();
 
+
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "generation_energy", joinColumns = {
+        @JoinColumn(name = "generation_id", referencedColumnName = "id"),
+        @JoinColumn(name = "game_id", referencedColumnName = "game_id"),
+        @JoinColumn(name = "board_id", referencedColumnName = "board_id")
+    })
+    @MapKeyJoinColumn(name = "cell_id")
+    @Column(name = "life_points", nullable = false)
+    private Map<Cell, Integer> energyStates = new HashMap<>();
+
+
     /**
      * Protected no-argument constructor required by JPA.
      *
@@ -215,13 +227,17 @@ public class Generation {
      */
     public Map<Cell, Boolean> snapCells() {
         cellAlivenessStates.clear();
+        energyStates.clear();
+
         for (Tile tile : board.getTiles()) {
             Cell cell = tile.getCell();
             if (cell == null) {
                 throw new IllegalStateException("Each tile should hold a cell!");
             }
             cellAlivenessStates.put(cell, cell.isAlive());
+            energyStates.put(cell, cell.getLifePoints());
         }
+
         return Map.copyOf(cellAlivenessStates);
     }
 
@@ -341,9 +357,12 @@ public class Generation {
      * @return a Map from Cell to its Integer lifePoints value
      */
     public Map<Cell, Integer> getEnergyStates() {
-        return Map.copyOf(cellAlivenessStates.keySet().stream()
-            .collect(Collectors.toMap(cell -> cell, Cell::getLifePoints)));
+        return Map.copyOf(energyStates);
     }
+
+    public void setEnergyStates(Map<Cell, Integer> energyStates) {
+        this.energyStates = energyStates;
+}
 
     /**
      * Returns an immutable snapshot of each cell’s alive/dead state.
