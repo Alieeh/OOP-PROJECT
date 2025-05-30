@@ -286,6 +286,10 @@ public class Board {
         
         // Copy the cell from the existing tile
         interactableTile.setCell(existingTile.getCell());
+
+        if (existingTile.getCell() != null) {
+        existingTile.getCell().setTile(interactableTile);
+    }
         
         // Initialize neighbors
         interactableTile.initializeNeighbors(board.getAdjacentTiles(existingTile));

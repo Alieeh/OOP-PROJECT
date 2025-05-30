@@ -122,6 +122,16 @@ public class Cell implements Evolvable, Interactable {
     }
 
     /**
+     * Sets the tile that this cell belongs to.
+     * Used to maintain bidirectional relationship with Tile.
+     *
+     * @param tile the Tile to associate with this cell
+     */
+    public void setTile(Tile tile) {
+        this.tile = tile;
+    }
+
+    /**
      * Applies the classic Conway’s Game of Life rules to calculate the cell’s next
      * alive/dead state.
      *
