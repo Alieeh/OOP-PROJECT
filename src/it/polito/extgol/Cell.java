@@ -336,9 +336,12 @@ public class Cell implements Evolvable, Interactable {
             }
         }
         case VAMPIRE -> {
-            if (otherCell.cellMood == CellMood.NAIVE && otherCell.lifepoints >= 0) {
+            if (otherCell.cellMood == CellMood.NAIVE && otherCell.lifepoints >= 0 && otherCell.nextMood == null) {
                 otherCell.lifepoints -= 1;
                 this.lifepoints += 1;
+                System.out.println("Vampire " + this + " feeds on " + otherCell);
+                System.out.println("Vampire " + this + " now has " + this.lifepoints);
+                System.out.println("Vampire " + otherCell + " now has " + otherCell.lifepoints);
                 otherCell.markForMoodChange(CellMood.VAMPIRE);
 
             } else if (otherCell.cellMood == CellMood.HEALER) {
