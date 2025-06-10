@@ -93,7 +93,7 @@ public class ExtendedGameOfLife {
         // Step 3: Apply all computed states simultaneously to avoid intermediate inconsistencies
         for (Map.Entry<Cell, Boolean> e : nextStates.entrySet()) {
             Cell c = e.getKey();
-            c.setAlive(e.getValue());
+            c.setAlive(e.getValue() && c.getLifePoints() >= 0);
             c.addGeneration(nextGen);  // register cell with new generation
         }
 
@@ -156,6 +156,7 @@ public class ExtendedGameOfLife {
             oldEvents.put(i, event); 
             if (event != null) {
                 for (Tile tile : currentGen.getBoard().getTiles()) {
+                    if(!tile.getCell().isAlive()) continue;
                     game.unrollEvent(event, tile.getCell()); //we apply the events to each cell
                 }
             }
