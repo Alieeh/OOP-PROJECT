@@ -349,18 +349,20 @@ public class Board {
             Cell currentCell = entry.getKey();
             int currentEnergy = entry.getValue();
             
-            if (currentEnergy > maxEnergy) {
-                maxEnergy = currentEnergy;
-                highestEnergyCell = currentCell;
-            } else if (currentEnergy == maxEnergy && highestEnergyCell != null) {
-                // Tie-breaking: choose the cell closer to top-left corner
-                // First compare Y coordinates (smaller Y = closer to top)
-                if (currentCell.getY() < highestEnergyCell.getY()) {
+            if(currentCell.isAlive()){
+                if (currentEnergy > maxEnergy) {
+                    maxEnergy = currentEnergy;
                     highestEnergyCell = currentCell;
-                } else if (currentCell.getY() == highestEnergyCell.getY()) {
-                    // If same Y, compare X coordinates (smaller X = closer to left)
-                    if (currentCell.getX() < highestEnergyCell.getX()) {
+                } else if (currentEnergy == maxEnergy && highestEnergyCell != null) {
+                    // Tie-breaking: choose the cell closer to top-left corner
+                    // First compare Y coordinates (smaller Y = closer to top)
+                    if (currentCell.getY() < highestEnergyCell.getY()) {
                         highestEnergyCell = currentCell;
+                    } else if (currentCell.getY() == highestEnergyCell.getY()) {
+                        // If same Y, compare X coordinates (smaller X = closer to left)
+                        if (currentCell.getX() < highestEnergyCell.getX()) {
+                            highestEnergyCell = currentCell;
+                        }
                     }
                 }
             }
