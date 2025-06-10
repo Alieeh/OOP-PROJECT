@@ -88,8 +88,44 @@ public class Tile implements Interactable {
     }
 
     @Override
-    public void interact(Cell cell) {
-        /*****/
+    public void interact(Cell cell) { //do both unrollevent and lifepointmodifier operations here
+        if(cell.isAlive()){
+            cell.setLifePoints(cell.getLifePoints() + this.getLifePointModifier());
+            EventType event = this.getCurrentEvent();
+            if (event == null) {
+                return;
+            }
+            switch (event) { //we can use a switch case as the events are enumerated
+                case CATACLYSM:
+                    cell.setLifePoints(0);
+                    break;
+                case FAMINE:
+                    cell.setLifePoints(cell.getLifePoints() - 1);
+                    break;
+                case BLOOM:
+                    cell.setLifePoints(cell.getLifePoints() + 2);
+                    break;
+                case BLOOD_MOON:
+                    if(cell.getMood() == CellMood.VAMPIRE){
+                        for (Tile tile : cell.getNeighbors()){
+                            Cell neighbor = tile.getCell();
+                            if (neighbor != null && neighbor.getMood() == CellMood.HEALER) {
+                                neighbor.setMood(CellMood.VAMPIRE); //convert the neighbor to a vampire
+                            }
+                        }
+                    }
+                    break;
+                case SANCTUARY:
+                    if(cell.getMood() == CellMood.HEALER){
+                        cell.setLifePoints(cell.getLifePoints() + 1);
+                    }
+                    else if(cell.getMood() == CellMood.VAMPIRE){
+                        cell.setMood(CellMood.NAIVE); //convert the vampire to a naive
+                    }
+                    break;
+        }
+            this.setCurrentEvent(null); //resetting so that it doesn't affect future gens 
+        }
     }
 
     /**
@@ -208,6 +244,13 @@ public class Tile implements Interactable {
     public void setLifePointModifier(int modifier) {
     this.lifePointModifier = modifier;
 }
-    
+    @Transient
+    private EventType currentEvent = null;
 
+    public void setCurrentEvent(EventType event) {
+        this.currentEvent = event;
+    }
+    public EventType getCurrentEvent() {
+        return this.currentEvent;
+    }
 }

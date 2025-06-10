@@ -404,5 +404,7 @@ public class Cell implements Evolvable, Interactable {
     public CellMood getMood() {
         return this.cellMood;
     }
-
+    public Tile getTile() {
+        return this.tile;
+    }
 }

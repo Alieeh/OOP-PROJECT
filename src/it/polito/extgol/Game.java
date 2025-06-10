@@ -253,35 +253,8 @@ public class Game {
      * @param cell  the Cell instance to which the event should be applied
      */
     public void unrollEvent(EventType event, Cell cell) {
-        switch (event) { //we can use a switch case as the events are enumerated
-            case CATACLYSM:
-                cell.setLifePoints(0);
-                break;
-            case FAMINE:
-                cell.setLifePoints(cell.getLifePoints() - 1);
-                break;
-            case BLOOM:
-                cell.setLifePoints(cell.getLifePoints() + 2);
-                break;
-            case BLOOD_MOON:
-                if(cell.getMood() == CellMood.VAMPIRE){
-                    for (Tile tile : cell.getNeighbors()){
-                        Cell neighbor = tile.getCell();
-                        if (neighbor != null && neighbor.getMood() == CellMood.HEALER) {
-                            neighbor.setMood(CellMood.VAMPIRE); //convert the neighbor to a vampire
-                        }
-                    }
-                }
-                break;
-            case SANCTUARY:
-                if(cell.getMood() == CellMood.HEALER){
-                    cell.setLifePoints(cell.getLifePoints() + 1);
-                }
-                else if(cell.getMood() == CellMood.VAMPIRE){
-                    cell.setMood(CellMood.NAIVE); //convert the vampire to a naive
-                }
-                break;
-        }
+        Tile tile = cell.getTile();
+        tile.setCurrentEvent(event);
     }
 
     /**
@@ -345,7 +318,6 @@ public class Game {
         }
         return Map.copyOf(retrievedGame.getEventMapInternal());
     }
-
     /**
      * Retrieves a specific Generation by its step index.
      *

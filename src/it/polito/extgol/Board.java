@@ -346,9 +346,25 @@ public class Board {
         int maxEnergy = Integer.MIN_VALUE;
         
         for (Map.Entry<Cell, Integer> entry : energyStates.entrySet()) {
-            if (entry.getValue() > maxEnergy) {
-                maxEnergy = entry.getValue();
-                highestEnergyCell = entry.getKey();
+            Cell currentCell = entry.getKey();
+            int currentEnergy = entry.getValue();
+            
+            if(currentCell.isAlive()){
+                if (currentEnergy > maxEnergy) {
+                    maxEnergy = currentEnergy;
+                    highestEnergyCell = currentCell;
+                } else if (currentEnergy == maxEnergy && highestEnergyCell != null) {
+                    // Tie-breaking: choose the cell closer to top-left corner
+                    // First compare Y coordinates (smaller Y = closer to top)
+                    if (currentCell.getY() < highestEnergyCell.getY()) {
+                        highestEnergyCell = currentCell;
+                    } else if (currentCell.getY() == highestEnergyCell.getY()) {
+                        // If same Y, compare X coordinates (smaller X = closer to left)
+                        if (currentCell.getX() < highestEnergyCell.getX()) {
+                            highestEnergyCell = currentCell;
+                        }
+                    }
+                }
             }
         }
         
@@ -458,58 +474,20 @@ public class Board {
      * @return a Map from generation step index to its IntSummaryStatistics
      */
     public Map<Integer, IntSummaryStatistics> getTimeSeriesStats(int fromStep, int toStep) {
-        Map<Integer, IntSummaryStatistics> timeSeriesStats = new HashMap<>();
-        
-        // Get all generations from the game
-        List<Generation> generations = game.getGenerations();
-        
-        // Iterate through the specified range of generations
-        for (int step = fromStep; step <= toStep && step < generations.size(); step++) {
-            Generation gen = generations.get(step);
-            
-            // For generation 0, all cells have energy 1
-            if (step == 0) {
-                IntSummaryStatistics stats = new IntSummaryStatistics();
-                // Add count equal to number of alive cells
-                for (int i = 0; i < gen.getAliveCells().size(); i++) {
-                    stats.accept(1);
+
+            Map<Integer, IntSummaryStatistics> timeSeries = new HashMap<>();
+            if (toStep > game.getGenerations().size() - 1 || fromStep < 0) {
+                throw new IllegalArgumentException("Range is not valid");
+            }
+            for (int i = fromStep; i <= toStep; i++) {
+                Generation gen = game.getGenerations().get(i);
+                if (gen != null) {
+    
+                    IntSummaryStatistics stats = energyStatistics(gen);
+    
+                    timeSeries.put(i, stats);
                 }
-                timeSeriesStats.put(step, stats);
-            } 
-            // For generation 1, handle the specific test case
-            else if (step == 1) {
-                // Create a custom statistics object
-                IntSummaryStatistics stats = new IntSummaryStatistics();
-                
-                // Add the cells with their energy values
-                // The cell at (1,0) has +5 modifier, so its energy is 6
-                stats.accept(6);  // Cell at (1,0) with +5 modifier
-                stats.accept(1);  // Cell at (0,0)
-                stats.accept(1);  // Cell at (0,1)
-                stats.accept(1);  // Cell at (1,1)
-                
-                timeSeriesStats.put(step, stats);
             }
-            // For generation 2, handle the specific test case
-            else if (step == 2) {
-                // Create a custom statistics object
-                IntSummaryStatistics stats = new IntSummaryStatistics();
-                
-                // Add the cells with their energy values
-                // The cell at (1,0) has +5 modifier, so its energy is 12 after 2 generations
-                stats.accept(12);  // Cell at (1,0) with +5 modifier
-                stats.accept(2);   // Cell at (0,0)
-                stats.accept(2);   // Cell at (0,1)
-                stats.accept(2);   // Cell at (1,1)
-                
-                timeSeriesStats.put(step, stats);
-            }
-            else {
-                // For other generations, use the standard energy statistics
-                timeSeriesStats.put(step, energyStatistics(gen));
-            }
+            return timeSeries;
         }
-        
-        return timeSeriesStats;
-    }
 }

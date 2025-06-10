@@ -52,9 +52,7 @@ public class ExtendedGameOfLife {
             if (c == null) {
                 throw new IllegalStateException("Missing cell on tile " + tile);
             }
-
             if (c.isAlive()) {
-                c.setLifePoints(c.getLifePoints() + tile.getLifePointModifier());
                 for (Tile neighborTile : tile.getNeighbors()) {
                     Cell neighbor = neighborTile.getCell();
                     if (neighbor != null && neighbor.isAlive()) {
@@ -123,6 +121,10 @@ public class ExtendedGameOfLife {
     public Game run(Game game, int steps) {
         Generation current = game.getStart();
         for (int i = 0; i < steps; i++) {
+            for (Tile tile : current.getBoard().getTiles()) {
+                game.unrollEvent(null, tile.getCell());
+                tile.interact(tile.getCell()); //interact with the tile's cell
+            }
             Generation next = evolve(current);
             current = next;
         }
@@ -156,8 +158,8 @@ public class ExtendedGameOfLife {
             oldEvents.put(i, event); 
             if (event != null) {
                 for (Tile tile : currentGen.getBoard().getTiles()) {
-                    if(!tile.getCell().isAlive()) continue;
                     game.unrollEvent(event, tile.getCell()); //we apply the events to each cell
+                    tile.interact(tile.getCell());
                 }
             }
             Generation next = evolve(currentGen);
